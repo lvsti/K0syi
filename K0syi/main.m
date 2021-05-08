@@ -67,6 +67,9 @@
         UInt16 vk = 0;
         UInt32 modifiers = 0;
         for (; vk <= 0xff; ++vk) {
+            if ([self isKeypadVirtualKeyCode:vk]) {
+                continue;
+            }
             if (!UCKeyTranslate(currentLayout, vk, kUCKeyActionDown, modifiers, keyboardType, kUCKeyTranslateNoDeadKeysBit, &deadKeyState, 64, &charCount, buffer) &&
                 [[NSString stringWithCharacters:buffer length:charCount] isEqualToString:graphemeCluster]) {
                 break;
@@ -75,6 +78,9 @@
         if (vk > 0xff) {
             modifiers = shiftKey >> 8;
             for (vk = 0; vk <= 0xff; ++vk) {
+                if ([self isKeypadVirtualKeyCode:vk]) {
+                    continue;
+                }
                 if (!UCKeyTranslate(currentLayout, vk, kUCKeyActionDown, modifiers, keyboardType, kUCKeyTranslateNoDeadKeysBit, &deadKeyState, 64, &charCount, buffer) &&
                     [[NSString stringWithCharacters:buffer length:charCount] isEqualToString:graphemeCluster]) {
                     break;
@@ -96,6 +102,31 @@
 
     [pboard clearContents];
     [pboard writeObjects:[NSArray arrayWithObject:dstString]];
+}
+
+- (BOOL)isKeypadVirtualKeyCode:(UInt16)vk {
+    switch (vk) {
+        case kVK_ANSI_KeypadClear:
+        case kVK_ANSI_KeypadEquals:
+        case kVK_ANSI_KeypadMultiply:
+        case kVK_ANSI_KeypadDivide:
+        case kVK_ANSI_KeypadMinus:
+        case kVK_ANSI_KeypadPlus:
+        case kVK_ANSI_KeypadEnter:
+        case kVK_ANSI_KeypadDecimal:
+        case kVK_ANSI_Keypad0:
+        case kVK_ANSI_Keypad1:
+        case kVK_ANSI_Keypad2:
+        case kVK_ANSI_Keypad3:
+        case kVK_ANSI_Keypad4:
+        case kVK_ANSI_Keypad5:
+        case kVK_ANSI_Keypad6:
+        case kVK_ANSI_Keypad7:
+        case kVK_ANSI_Keypad8:
+        case kVK_ANSI_Keypad9:
+            return YES;
+    }
+    return NO;
 }
 
 @end
