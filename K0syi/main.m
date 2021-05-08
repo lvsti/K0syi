@@ -65,15 +65,25 @@
         UniChar buffer[64];
         UniCharCount charCount = 0;
         UInt16 vk = 0;
+        UInt32 modifiers = 0;
         for (; vk <= 0xff; ++vk) {
-            if (!UCKeyTranslate(currentLayout, vk, kUCKeyActionDown, 0, keyboardType, kUCKeyTranslateNoDeadKeysBit, &deadKeyState, 64, &charCount, buffer) &&
+            if (!UCKeyTranslate(currentLayout, vk, kUCKeyActionDown, modifiers, keyboardType, kUCKeyTranslateNoDeadKeysBit, &deadKeyState, 64, &charCount, buffer) &&
                 [[NSString stringWithCharacters:buffer length:charCount] isEqualToString:graphemeCluster]) {
                 break;
             }
         }
+        if (vk > 0xff) {
+            modifiers = shiftKey >> 8;
+            for (vk = 0; vk <= 0xff; ++vk) {
+                if (!UCKeyTranslate(currentLayout, vk, kUCKeyActionDown, modifiers, keyboardType, kUCKeyTranslateNoDeadKeysBit, &deadKeyState, 64, &charCount, buffer) &&
+                    [[NSString stringWithCharacters:buffer length:charCount] isEqualToString:graphemeCluster]) {
+                    break;
+                }
+            }
+        }
 
         // forward lookup (virtual key --> unichar in other layout)
-        if (vk <= 0xff && !UCKeyTranslate(otherLayout, vk, kUCKeyActionDown, 0, LMGetKbdType(), kUCKeyTranslateNoDeadKeysBit, &deadKeyState, 64, &charCount, buffer)) {
+        if (vk <= 0xff && !UCKeyTranslate(otherLayout, vk, kUCKeyActionDown, modifiers, LMGetKbdType(), kUCKeyTranslateNoDeadKeysBit, &deadKeyState, 64, &charCount, buffer)) {
             gcMap[graphemeCluster] = [NSString stringWithCharacters:buffer length:charCount];
             [dstString appendString:gcMap[graphemeCluster]];
         } else {
